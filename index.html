@@ -3,191 +3,1045 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ChargingMate</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>ChargingMate - Society EV Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-:root{--k:#000;--w:#fff;--g1:#f3f3f3;--g2:#e2e2e2;--g3:#6b6b6b;--ev:#05a357;--bl:#276ef1}
-*{box-sizing:border-box;margin:0}
-html,body{height:100%;font:400 15px/1.4 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--k);background:var(--g1)}
-button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
-:focus-visible{outline:3px solid var(--bl);outline-offset:2px}
-#map{position:fixed;inset:0}
-.leaflet-container{font-family:inherit}
-.leaflet-control-zoom{border:0!important;box-shadow:0 2px 10px #0003!important}
-.leaflet-control-attribution{font-size:10px}
+:root {
+  --k: #000000;
+  --w: #ffffff;
+  --g50: #f8f9fa;
+  --g100: #f1f2f4;
+  --g200: #e5e7eb;
+  --g400: #9ca3af;
+  --g600: #595959;
+  --ev-green: #05a357;
+  --uber-blue: #276ef1;
+  --shadow-sheet: 0 -8px 30px rgba(0,0,0,0.12);
+  --shadow-card: 0 4px 18px rgba(0,0,0,0.06);
+  --radius-xl: 20px;
+  --radius-md: 12px;
+}
 
-/* top location pill */
-#top{position:fixed;z-index:500;top:max(12px,env(safe-area-inset-top));left:12px;right:60px;display:flex;pointer-events:none}
-.pill{pointer-events:auto;display:flex;align-items:center;gap:10px;background:var(--w);border-radius:999px;padding:8px 8px 8px 16px;box-shadow:0 4px 16px #0003;max-width:100%}
-.pill .sq{width:8px;height:8px;background:var(--k);flex:none}
-.pill small{display:block;font-size:11px;color:var(--g3);line-height:1.1}
-.pill b{font-weight:600;white-space:nowrap}
-#gps{width:36px;height:36px;border-radius:50%;background:var(--g1);font-size:18px;display:grid;place-items:center}
-#gps:hover{background:var(--g2)}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
 
-/* sheet */
-#sheet{position:fixed;z-index:600;background:var(--w);display:flex;flex-direction:column;box-shadow:0 -4px 24px #0003}
-.grab{width:40px;height:4px;border-radius:2px;background:var(--g2);margin:8px auto 0;flex:none}
-#view{overflow:auto;padding:12px 16px 0;flex:1;overscroll-behavior:contain}
-@media(max-width:799px){#sheet{left:0;right:0;bottom:0;max-height:52vh;border-radius:20px 20px 0 0;padding-bottom:env(safe-area-inset-bottom)}}
-@media(min-width:800px){#sheet{top:16px;left:16px;bottom:16px;width:392px;border-radius:16px;box-shadow:0 8px 32px #0003}.grab{display:none}#view{padding-top:20px}#top{left:424px}}
+html, body {
+  height: 100%;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  color: var(--k);
+  background: #fcfcfc;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
 
-h1{font-size:24px;font-weight:700;letter-spacing:-.02em}
-h2{font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1.2}
-.sub{color:var(--g3);font-size:14px;margin-top:2px}
-.primary{display:block;width:100%;background:var(--k);color:var(--w);font-weight:600;padding:14px;border-radius:10px;text-align:center}
-.primary:hover{background:#222}
-.ghost{background:var(--g1);font-weight:600;padding:14px 18px;border-radius:10px}
-.ghost:hover{background:var(--g2)}
-.chips{display:flex;gap:8px;overflow-x:auto;margin:14px -16px 6px;padding:0 16px 4px;scrollbar-width:none}
-.chip{flex:none;padding:7px 14px;border-radius:999px;background:var(--g1);font-weight:500;font-size:13px}
-.chip[aria-pressed=true]{background:var(--k);color:var(--w)}
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: 0;
+  background: none;
+  transition: all 0.18s cubic-bezier(0.2, 0, 0, 1);
+}
 
-/* rows */
-.row{display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:12px 0;border-bottom:1px solid var(--g1)}
-.row:hover{background:var(--g1);margin:0 -16px;padding:12px 16px;width:calc(100% + 32px)}
-.ic{flex:none;width:44px;height:44px;border-radius:50%;background:var(--g1);display:grid;place-items:center;font-size:20px}
-.row .m{flex:1;min-width:0}
-.row b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.row span.s{font-size:13px;color:var(--g3)}
-.row .r{text-align:right;flex:none}
-.row .r b{font-size:15px}
-.tag{display:inline-block;background:var(--ev);color:#fff;font-size:11px;font-weight:600;border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:1px}
+:focus-visible {
+  outline: 2px solid var(--k);
+  outline-offset: 2px;
+}
 
-/* detail */
-.back{font-weight:600;color:var(--g3);padding:2px 0 10px}
-.hd{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
-.price{text-align:right;flex:none}
-.price b{font-size:22px;display:block;line-height:1.1}
-.price small{color:var(--g3);font-size:12px}
-.eta{display:flex;align-items:center;gap:10px;margin:14px 0;padding:12px 14px;background:var(--g1);border-radius:12px;font-weight:600}
-.eta i{font-style:normal;color:var(--g3);font-weight:400}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.grid div{border:1px solid var(--g2);border-radius:12px;padding:10px 12px}
-.grid small{display:block;color:var(--g3);font-size:12px}
-.grid b{font-weight:600}
-.about{margin:14px 0 10px;color:#333}
-.tags{display:flex;flex-wrap:wrap;gap:6px}
-.tags span{background:var(--g1);border-radius:6px;padding:4px 9px;font-size:13px}
-.acts{position:sticky;bottom:0;background:var(--w);display:flex;gap:10px;padding:14px 0 16px}
-.acts .primary{flex:1}
-#steps{list-style:none;padding:0 0 16px}
-#steps li{display:flex;gap:12px;align-items:center;padding:11px 0;border-top:1px solid var(--g1)}
-#steps .a{flex:none;width:34px;height:34px;border-radius:50%;background:var(--g1);display:grid;place-items:center;font-size:17px;font-weight:700}
-#steps .t{flex:1}
-#steps .d{color:var(--g3);font-size:13px;flex:none}
+#map {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
 
-a.primary{text-decoration:none}
-#steps .a span{display:inline-block}
+.leaflet-control-zoom {
+  border: 0 !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+.leaflet-control-zoom a {
+  width: 36px !important;
+  height: 36px !important;
+  line-height: 36px !important;
+  color: #000 !important;
+}
 
-/* markers */
-.pw{background:none;border:0}
-.pm{position:absolute;transform:translate(-50%,-50%);background:var(--w);border-radius:999px;padding:5px 10px;font-weight:700;font-size:12px;box-shadow:0 2px 8px #0004;white-space:nowrap}
-.pm::before{content:"\26A1";color:var(--ev);margin-right:3px}
-.pm.sel{background:var(--k);color:var(--w)}
-.me{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:var(--bl);border:3px solid #fff;box-shadow:0 0 0 0 #276ef188;animation:p 2s infinite}
-@keyframes p{to{box-shadow:0 0 0 18px #276ef100}}
-@media(prefers-reduced-motion:reduce){.me{animation:none}}
-#toast{position:fixed;z-index:800;left:50%;top:80px;transform:translateX(-50%);background:var(--k);color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;max-width:90vw;display:none}
+/* Uber Header Pill */
+#top {
+  position: fixed;
+  z-index: 500;
+  top: max(16px, env(safe-area-inset-top));
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+}
+
+.pill-container {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--w);
+  border-radius: 999px;
+  padding: 8px 12px 8px 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+.loc-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--k);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.1);
+}
+
+.pill-text small {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--g600);
+}
+
+.pill-text b {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+#gps {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--g100);
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  pointer-events: auto;
+}
+#gps:hover { background: var(--g200); }
+
+/* Uber Sheet */
+#sheet {
+  position: fixed;
+  z-index: 600;
+  background: var(--w);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.grab-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--g200);
+  margin: 10px auto 4px;
+  flex: none;
+}
+
+#view {
+  overflow-y: auto;
+  padding: 14px 20px 24px;
+  flex: 1;
+  overscroll-behavior: contain;
+}
+
+@media(max-width: 799px) {
+  #sheet {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 58vh;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    box-shadow: var(--shadow-sheet);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+@media(min-width: 800px) {
+  #sheet {
+    top: 20px;
+    left: 20px;
+    bottom: 20px;
+    width: 410px;
+    border-radius: var(--radius-xl);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.14);
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+  .grab-handle { display: none; }
+  #top { left: 450px; right: auto; }
+}
+
+/* Typography & Core UI */
+h1 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--k);
+}
+
+h2 {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.sub {
+  color: var(--g600);
+  font-size: 13.5px;
+  font-weight: 400;
+  margin-top: 3px;
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: var(--k);
+  color: var(--w);
+  font-weight: 600;
+  font-size: 15px;
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+}
+.btn-primary:hover { background: #222; }
+.btn-primary:active { transform: scale(0.99); }
+
+.btn-ghost {
+  background: var(--g100);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 12px 18px;
+  border-radius: var(--radius-md);
+}
+.btn-ghost:hover { background: var(--g200); }
+
+/* Horizontal Category Chips */
+.chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin: 16px -20px 8px;
+  padding: 0 20px 4px;
+  scrollbar-width: none;
+}
+.chips::-webkit-scrollbar { display: none; }
+
+.chip {
+  flex: none;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--g100);
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--g600);
+}
+.chip:hover { background: var(--g200); }
+.chip[aria-pressed="true"] {
+  background: var(--k);
+  color: var(--w);
+  font-weight: 600;
+}
+
+/* Listing Rows */
+.row {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--g100);
+  transition: background 0.15s ease;
+}
+.row:hover {
+  background: var(--g50);
+  margin: 0 -20px;
+  padding: 14px 20px;
+  width: calc(100% + 40px);
+}
+.row:last-child { border-bottom: none; }
+
+.ic {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--g100);
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+}
+
+.row .m {
+  flex: 1;
+  min-width: 0;
+}
+
+.row b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row span.s {
+  display: block;
+  font-size: 12.5px;
+  color: var(--g600);
+  margin-top: 3px;
+}
+
+.row .r {
+  text-align: right;
+  flex: none;
+}
+.row .r b {
+  font-size: 15px;
+  font-weight: 700;
+  display: block;
+}
+
+.badge-fast {
+  background: #05a35718;
+  color: #05a357;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+.badge-tag {
+  background: var(--g100);
+  color: var(--k);
+  font-size: 10.5px;
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 1px 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Society Detail View */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--g600);
+  margin-bottom: 12px;
+  padding: 4px 0;
+}
+.back-btn:hover { color: var(--k); }
+
+.hd {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+.price-block {
+  text-align: right;
+  flex: none;
+}
+.price-block b {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+  display: block;
+}
+.price-block small {
+  color: var(--g600);
+  font-size: 11.5px;
+}
+
+.eta-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 16px 0;
+  padding: 14px 16px;
+  background: var(--g50);
+  border: 1px solid var(--g100);
+  border-radius: var(--radius-md);
+}
+.eta-card .time {
+  font-size: 20px;
+  font-weight: 700;
+}
+.eta-card .dist {
+  color: var(--g600);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.specs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.spec-box {
+  background: var(--w);
+  border: 1px solid var(--g200);
+  border-radius: var(--radius-md);
+  padding: 12px;
+}
+.spec-box small {
+  display: block;
+  color: var(--g600);
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+.spec-box b {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--k);
+}
+
+.about-text {
+  margin: 16px 0 12px;
+  color: #3f3f46;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+.tags-row span {
+  background: var(--g100);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #333;
+}
+
+.actions-sticky {
+  position: sticky;
+  bottom: 0;
+  background: var(--w);
+  display: flex;
+  gap: 10px;
+  padding: 14px 0 6px;
+  border-top: 1px solid var(--g100);
+}
+.actions-sticky .btn-primary { flex: 1; }
+
+#steps {
+  list-style: none;
+  padding: 8px 0 16px;
+}
+#steps li {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--g100);
+}
+#steps .step-ic {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--g100);
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  font-weight: 700;
+}
+#steps .step-tx {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+#steps .step-km {
+  color: var(--g600);
+  font-size: 12.5px;
+}
+
+/* Markers */
+.pw { background: none; border: 0; }
+.uber-pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: var(--k);
+  color: var(--w);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-weight: 600;
+  font-size: 12px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: transform 0.18s ease;
+}
+.uber-pin:hover { transform: translate(-50%, -50%) scale(1.06); }
+.uber-pin.sel {
+  background: var(--uber-blue);
+  color: var(--w);
+  box-shadow: 0 6px 20px rgba(39, 110, 241, 0.4);
+}
+.uber-pin .zap { color: #00ff7f; font-size: 11px; }
+
+.me-dot {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 50%;
+  background: var(--uber-blue);
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 0 rgba(39, 110, 241, 0.4);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  to { box-shadow: 0 0 0 16px rgba(39, 110, 241, 0); }
+}
+
+#toast {
+  position: fixed;
+  z-index: 900;
+  left: 50%;
+  top: 75px;
+  transform: translateX(-50%);
+  background: var(--k);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 500;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+  display: none;
+}
 </style>
 </head>
 <body>
+
 <div id="map"></div>
-<div id="top"><div class="pill"><span class="sq"></span><div><small>Charging near</small><b id="loc">Udaipur 313001</b></div><button id="gps" aria-label="Use my current location">&#8982;</button></div></div>
-<section id="sheet" aria-label="Chargers"><div class="grab"></div><div id="view"></div></section>
+
+<div id="top">
+  <div class="pill-container">
+    <div class="loc-dot"></div>
+    <div class="pill-text">
+      <small>Community Chargers</small>
+      <b id="loc">Udaipur, RJ</b>
+    </div>
+    <button id="gps" aria-label="Use Current Location">&#8982;</button>
+  </div>
+</div>
+
+<section id="sheet" aria-label="Apartment EV Chargers">
+  <div class="grab-handle"></div>
+  <div id="view"></div>
+</section>
+
 <div id="toast" role="status"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-/* ---------- Sample data (prototype): details, prices and availability are made up; coordinates approximate ---------- */
-const C=[
-{id:1,n:"Ambrai Restaurant",t:"Fine dining",a:"Amet Haveli, Lake Pichola",lat:24.5776,lng:73.6807,p:1150,kw:60,cn:"CCS2",h:"12 PM to 11 PM",f:2,tot:4,r:4.6,am:["Lake view","Valet","Wi-Fi"],b:"Lakeside Mughlai and Rajasthani dining facing the City Palace. Charge while you enjoy the sunset."},
-{id:2,n:"Upre by 1559 AD",t:"Rooftop dining",a:"Lal Ghat, Lake Pichola",lat:24.5798,lng:73.6812,p:1200,kw:50,cn:"CCS2",h:"11 AM to 11:30 PM",f:1,tot:2,r:4.5,am:["Rooftop","Live music","Wi-Fi"],b:"Candlelit rooftop with some of the best lake views in the city."},
-{id:3,n:"Jheel's Ginger Coffee Bar",t:"Cafe",a:"Gangaur Ghat Road",lat:24.5792,lng:73.6828,p:900,kw:22,cn:"Type 2",h:"8 AM to 10 PM",f:2,tot:2,r:4.4,am:["Coffee","Bakery","Wi-Fi"],b:"Relaxed cafe with fresh coffee and sandwiches. Good for a quick top-up."},
-{id:4,n:"Natraj Dining Hall",t:"Rajasthani thali",a:"Bapu Bazaar",lat:24.5788,lng:73.6911,p:950,kw:30,cn:"Type 2",h:"10:30 AM to 10 PM",f:3,tot:3,r:4.3,am:["Veg thali","Family seating","Parking"],b:"Famous unlimited vegetarian thali near Jagdish Chowk."},
-{id:5,n:"Savage Garden",t:"Continental",a:"Chandpole",lat:24.5806,lng:73.6862,p:1100,kw:50,cn:"CCS2",h:"12 PM to 11 PM",f:1,tot:2,r:4.4,am:["Garden seating","Bar","Wi-Fi"],b:"Mediterranean and Indian menu in a leafy courtyard."},
-{id:6,n:"Cafe Edelweiss",t:"Bakery and cafe",a:"Gangaur Ghat Road",lat:24.5786,lng:73.6838,p:920,kw:22,cn:"Type 2",h:"8 AM to 10 PM",f:2,tot:2,r:4.3,am:["Bakery","Takeaway","Wi-Fi"],b:"Popular German-style bakery with pastries, sandwiches and coffee."},
-{id:7,n:"Jag Mandir Palace Restaurant",t:"Heritage dining",a:"Jag Mandir, Lake Pichola",lat:24.5712,lng:73.6801,p:1200,kw:60,cn:"CCS2",h:"12 PM to 10:30 PM",f:1,tot:2,r:4.7,am:["Island palace","Boat transfer","Valet"],b:"Dine in a palace on an island in the lake. Boat from City Palace jetty."},
-{id:8,n:"Durbar Hall, Fateh Prakash",t:"Palace dining",a:"City Palace Complex",lat:24.5758,lng:73.6831,p:1180,kw:60,cn:"CCS2",h:"7 AM to 11 PM",f:3,tot:4,r:4.6,am:["Royal decor","Valet","Concierge"],b:"Grand royal setting inside the City Palace with Rajasthani set menus."},
-{id:9,n:"Udai Kothi Rooftop",t:"Rooftop dining",a:"Hanuman Ghat",lat:24.5800,lng:73.6849,p:1080,kw:50,cn:"CCS2",h:"12 PM to 11 PM",f:2,tot:3,r:4.4,am:["Pool view","Rooftop","Bar"],b:"Rooftop restaurant with a pool and open views of the old city."},
-{id:10,n:"Fateh Sagar Lakeside Cafe",t:"Lakeside cafe",a:"Fateh Sagar Pal",lat:24.6001,lng:73.6790,p:960,kw:30,cn:"Type 2",h:"9 AM to 11 PM",f:4,tot:4,r:4.2,am:["Lake view","Snacks","Parking"],b:"Casual snack and chai stop on the Fateh Sagar promenade."}
+/* Real residential societies and modern apartment hubs across Udaipur */
+const SOCIETIES = [
+  {
+    id: 1,
+    name: "Celebration Residency",
+    type: "Gated High-Rise",
+    area: "Bhuwana / Sukher Rd",
+    lat: 24.6212,
+    lng: 73.7088,
+    cost: "₹16/kWh",
+    unitPrice: 16,
+    power: 22,
+    conn: "Type 2 & CCS2",
+    hours: "24/7 Access",
+    free: 3,
+    total: 4,
+    rating: 4.8,
+    access: "Open to Visitors",
+    tags: ["Basement P1", "Security Gate 1", "RFID Tap", "CCTV"],
+    about: "Premier residential enclave adjacent to Celebration Mall. Chargers located near Gate 1 basement ramp. Visitor parking clearance automated at guard station."
+  },
+  {
+    id: 2,
+    name: "Navratna Complex",
+    type: "Gated Township",
+    area: "Bedla Road, Pulla",
+    lat: 24.6145,
+    lng: 73.6924,
+    cost: "₹14/kWh",
+    unitPrice: 14,
+    power: 11,
+    conn: "Type 2",
+    hours: "6 AM - 11 PM",
+    free: 2,
+    total: 3,
+    rating: 4.6,
+    access: "Guest Pass Needed",
+    tags: ["Clubhouse Parking", "Park Facing", "UPI Payment"],
+    about: "Established, sprawling society in North Udaipur. Fast AC chargers located at the Central Community Clubhouse parking bay."
+  },
+  {
+    id: 3,
+    name: "Archi Peace Park",
+    type: "Luxury Apartment",
+    area: "Sector 4, Hiran Magri",
+    lat: 24.5684,
+    lng: 73.7196,
+    cost: "₹18/kWh",
+    unitPrice: 18,
+    power: 60,
+    conn: "Dual CCS2 (DC Fast)",
+    hours: "24/7 Access",
+    free: 1,
+    total: 2,
+    rating: 4.9,
+    access: "Public & Resident",
+    tags: ["DC Fast Charge", "Open Guest Bay", "Cafe Nearby"],
+    about: "Modern luxury high-rise near Main Road Sector 4. Equipped with a dedicated commercial dual-gun DC Fast Charger for residents and verified visitors."
+  },
+  {
+    id: 4,
+    name: "Manglam Grand City",
+    type: "Township Enclave",
+    area: "Bypass Highway, Savina",
+    lat: 24.5421,
+    lng: 73.7081,
+    cost: "₹15/kWh",
+    unitPrice: 15,
+    power: 30,
+    conn: "CCS2 / Type 2",
+    hours: "24/7 Access",
+    free: 4,
+    total: 6,
+    rating: 4.5,
+    access: "Open to Visitors",
+    tags: ["Highway Access", "6 Charging Slots", "Lounge"],
+    about: "Large integrated residential complex near Savina Highway. Offers 6 dedicated charging bays outside Tower B with quick highway entry."
+  },
+  {
+    id: 5,
+    name: "Shreenath Enclave",
+    type: "Residential Society",
+    area: "Shobhagpura Circle",
+    lat: 24.6080,
+    lng: 73.7154,
+    cost: "₹15/kWh",
+    unitPrice: 15,
+    power: 11,
+    conn: "Type 2 AC",
+    hours: "6 AM - 11:30 PM",
+    free: 2,
+    total: 2,
+    rating: 4.4,
+    access: "Resident + Pre-book",
+    tags: ["Ground Level", "EV Bay A1", "Security Staffed"],
+    about: "Active residential hub in Shobhagpura. Chargers are mounted on the east perimeter wall with straightforward QR code unlock."
+  },
+  {
+    id: 6,
+    name: "Royal Rajvilas",
+    type: "Luxury Apartment",
+    area: "Near 100 Ft Rd, Shobhagpura",
+    lat: 24.6025,
+    lng: 73.7230,
+    cost: "₹17/kWh",
+    unitPrice: 17,
+    power: 50,
+    conn: "CCS2 Fast",
+    hours: "24/7 Access",
+    free: 2,
+    total: 2,
+    rating: 4.7,
+    access: "Open via App",
+    tags: ["50kW Fast", "Valet Guard", "Well Lit"],
+    about: "Premium high-rise along the 100 Feet Road corridor. 50kW fast charger installed in the outer visitor parking bay."
+  },
+  {
+    id: 7,
+    name: "Terra Elegance",
+    type: "Gated High-Rise",
+    area: "New Navratna Complex",
+    lat: 24.6190,
+    lng: 73.6961,
+    cost: "₹14/kWh",
+    unitPrice: 14,
+    power: 7.4,
+    conn: "Type 2",
+    hours: "24/7 Access",
+    free: 2,
+    total: 3,
+    rating: 4.3,
+    access: "Resident Guest",
+    tags: ["Covered Parking", "Slow Overnight", "Safe Gate"],
+    about: "Peaceful multistory apartment tower. Standard 7.4 kW Level-2 chargers optimal for top-ups or overnight charging."
+  },
+  {
+    id: 8,
+    name: "Anand Plaza & Enclave",
+    type: "Mixed Community",
+    area: "University Road, Ayad",
+    lat: 24.5880,
+    lng: 73.7225,
+    cost: "₹16/kWh",
+    unitPrice: 16,
+    power: 22,
+    conn: "Type 2 & 15A Socket",
+    hours: "7 AM - 10:30 PM",
+    free: 2,
+    total: 4,
+    rating: 4.4,
+    access: "Open to Visitors",
+    tags: ["2-Wheeler + 4-Wheeler", "Near Market", "Ground Bay"],
+    about: "Centrally located near MLSU campus. Suitable for both 4-wheelers and 2-wheelers with dual AC guns."
+  },
+  {
+    id: 9,
+    name: "Kavita Enclave / Modern Duplex",
+    type: "Gated Colony",
+    area: "Fatehpura / Sahelion Ki Bari",
+    lat: 24.6022,
+    lng: 73.6881,
+    cost: "₹15/kWh",
+    unitPrice: 15,
+    power: 11,
+    conn: "Type 2",
+    hours: "24/7 Access",
+    free: 1,
+    total: 2,
+    rating: 4.6,
+    access: "Gate Registry Entry",
+    tags: ["Quiet Neighborhood", "Shaded Area", "Fast App QR"],
+    about: "Residential colony near Fatehpura circle with accessible EV charging pedestals right by the RWA community center."
+  },
+  {
+    id: 10,
+    name: "Orbit Royal Residency",
+    type: "High-Rise Society",
+    area: "Sector 14, Goverdhan Vilas",
+    lat: 24.5492,
+    lng: 73.6912,
+    cost: "₹16/kWh",
+    unitPrice: 16,
+    power: 30,
+    conn: "CCS2 DC",
+    hours: "24/7 Access",
+    free: 3,
+    total: 4,
+    rating: 4.7,
+    access: "Open to Public",
+    tags: ["South Udaipur", "Near NH48", "Dedicated Bay"],
+    about: "Strategically located in South Udaipur for residents of Hiran Magri Sectors 13/14 and Ahmedabad highway travelers."
+  }
 ];
-const D0=[24.5854,73.6975],$=id=>document.getElementById(id),view=$("view");
-let origin=[...D0],sel=null,flt="All",rl=L.layerGroup();
-const mk={},rs=n=>"\u20B9"+n.toLocaleString("en-IN");
 
-/* ---------- Map ---------- */
-const map=L.map("map",{zoomControl:false}).setView(D0,14);
-L.control.zoom({position:"topright"}).addTo(map);
-const esri="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/";
-L.tileLayer(esri+"World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,maxNativeZoom:16,attribution:"Tiles &copy; Esri"}).addTo(map);
-L.tileLayer(esri+"World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,maxNativeZoom:16}).addTo(map);
-rl.addTo(map);
-const me=L.marker(D0,{icon:L.divIcon({className:"pw",html:'<div class="me"></div>',iconSize:[0,0]}),zIndexOffset:900}).addTo(map);
-const pin=(c,s)=>L.divIcon({className:"pw",html:`<div class="pm${s?" sel":""}">${c.p}</div>`,iconSize:[0,0]});
-C.forEach(c=>{mk[c.id]=L.marker([c.lat,c.lng],{icon:pin(c)}).addTo(map).on("click",()=>pick(c.id))});
-const pad=()=>innerWidth>=800?{paddingTopLeft:[430,90],paddingBottomRight:[50,50]}:{paddingTopLeft:[30,110],paddingBottomRight:[30,Math.round(innerHeight*.52)+20]};
+const DEFAULT_LOC = [24.5854, 73.6975]; // Central Udaipur
+const $ = id => document.getElementById(id);
+const view = $("view");
 
-/* ---------- Helpers ---------- */
-const hv=(a,b)=>{const r=Math.PI/180,x=Math.sin((b[0]-a[0])*r/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin((b[1]-a[1])*r/2)**2;return 12742*Math.asin(Math.sqrt(x))};
-const fm=m=>m<1000?Math.max(10,Math.round(m/10)*10)+" m":(m/1000).toFixed(1)+" km";
-const toast=t=>{const e=$("toast");e.textContent=t;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",3500)};
-const icon=t=>/cafe|Cafe|Bakery/.test(t)?"\u2615":/thali/.test(t)?"\uD83C\uDF5B":/Palace|Heritage/.test(t)?"\uD83C\uDFF0":/Rooftop/.test(t)?"\uD83C\uDF06":"\uD83C\uDF7D\uFE0F";
-const brg=(a,b)=>{const r=Math.PI/180,dg=(b[1]-a[1])*r,y=Math.sin(dg)*Math.cos(b[0]*r),x=Math.cos(a[0]*r)*Math.sin(b[0]*r)-Math.sin(a[0]*r)*Math.cos(b[0]*r)*Math.cos(dg);return(Math.atan2(y,x)/r+360)%360};
-const dn=d=>["north","north-east","east","south-east","south","south-west","west","north-west"][Math.round(d/45)%8];
-const est=c=>{c.d=hv(origin,[c.lat,c.lng])*1.3;c.e=Math.max(2,Math.round(c.d/22*60))};
-const sorted=()=>{C.forEach(est);return[...C].sort((a,b)=>a.d-b.d)};
+let origin = [...DEFAULT_LOC];
+let selectedSociety = null;
+let activeFilter = "All";
+let routeLayer = L.layerGroup();
+const markers = {};
 
-/* ---------- List view ---------- */
-function list(){
- rl.clearLayers();sel=null;
- C.forEach(c=>mk[c.id].setIcon(pin(c)));
- const all=sorted(),types=["All",...new Set(C.map(c=>c.t))],rows=all.filter(c=>flt==="All"||c.t===flt);
- view.innerHTML=`<h1>Chargers near you</h1><p class="sub">${C.length} restaurants with EV charging around Udaipur</p>
- <button class="primary" id="cl" style="margin-top:14px">Route to closest charger</button>
- <div class="chips">${types.map(t=>`<button class="chip" aria-pressed="${t===flt}" data-t="${t}">${t}</button>`).join("")}</div>
- ${rows.map(c=>`<button class="row" data-id="${c.id}"><span class="ic">${icon(c.t)}</span><span class="m"><b>${c.n}${c.id===all[0].id?'<span class="tag">Closest</span>':""}</b><span class="s">${c.t}, ${c.e} min away, ${c.f}/${c.tot} free</span></span><span class="r"><b>${rs(c.p)}</b><span class="s">${c.d.toFixed(1)} km</span></span></button>`).join("")||'<p class="sub" style="padding:20px 0">No chargers match this filter.</p>'}`;
- $("cl").onclick=()=>pick(all[0].id);
- view.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{flt=b.dataset.t;list()});
- view.querySelectorAll(".row").forEach(b=>b.onclick=()=>pick(+b.dataset.id));
- if(!rs.fit){map.fitBounds(L.latLngBounds([origin,...C.map(c=>[c.lat,c.lng])]),pad());rs.fit=1}
-}
+/* Map initialization with clean Minimalist Map tiles */
+const map = L.map("map", { zoomControl: false }).setView(DEFAULT_LOC, 13);
+L.control.zoom({ position: "topright" }).addTo(map);
 
-/* ---------- Detail + path (straight line, no routing service) ---------- */
-function pick(id){
- sel=C.find(c=>c.id===id);est(sel);
- C.forEach(c=>{mk[c.id].setIcon(pin(c,c.id===id));mk[c.id].setZIndexOffset(c.id===id?1000:0)});
- const c=sel,to=[c.lat,c.lng],b=brg(origin,to),km=c.d.toFixed(1);
- view.innerHTML=`<button class="back" id="bk">&#8249; All chargers</button>
- <div class="hd"><div><h2>${c.n}</h2><p class="sub">${c.t}, ${c.a}</p><p class="sub">&#9733; ${c.r} &nbsp;Open ${c.h}</p></div><div class="price"><b>${rs(c.p)}</b><small>per charge</small></div></div>
- <div class="eta"><span style="font-size:20px">${c.e} min</span><i>about ${km} km, ${dn(b)} of you</i></div>
- <div class="grid"><div><small>Power</small><b>${c.kw} kW fast charge</b></div><div><small>Connector</small><b>${c.cn}</b></div><div><small>Availability</small><b>${c.f} of ${c.tot} free</b></div><div><small>Charging time</small><b>~${Math.round(30*60/c.kw*1.1)} min for 30 kWh</b></div></div>
- <p class="about">${c.b}</p><div class="tags">${c.am.map(a=>`<span>${a}</span>`).join("")}</div>
- <ol id="steps" hidden>
-  <li><span class="a"><span style="transform:rotate(${Math.round(b)}deg)">&#8593;</span></span><span class="t">Head ${dn(b)} from your location</span><span class="d">${km} km</span></li>
-  <li><span class="a">&#9873;</span><span class="t">Arrive at ${c.n}, ${c.a}</span><span class="d"></span></li>
- </ol>
- <div class="acts"><a class="primary" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&origin=${origin[0]},${origin[1]}&destination=${c.lat},${c.lng}&travelmode=driving">Open in Google Maps</a><button class="ghost" id="dr">Directions</button></div>`;
- $("bk").onclick=list;
- $("dr").onclick=()=>{const s=$("steps");s.hidden=!s.hidden;$("dr").textContent=s.hidden?"Directions":"Hide directions";if(!s.hidden)s.scrollIntoView({behavior:"smooth",block:"nearest"})};
- rl.clearLayers();
- L.polyline([origin,to],{color:"#fff",weight:10,lineCap:"round"}).addTo(rl);
- L.polyline([origin,to],{color:"#000",weight:5,lineCap:"round"}).addTo(rl);
- L.circleMarker(origin,{radius:7,color:"#000",weight:3,fillColor:"#fff",fillOpacity:1}).addTo(rl);
- map.fitBounds(L.latLngBounds([origin,to]),pad());
-}
+const esriBase = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}";
+const esriRef = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}";
 
-/* ---------- Location ---------- */
-$("gps").onclick=()=>{
- if(!navigator.geolocation)return toast("Location is not available in this browser.");
- navigator.geolocation.getCurrentPosition(p=>{
-  const n=[p.coords.latitude,p.coords.longitude];
-  if(hv(n,D0)>40)return toast("You are outside Udaipur, so the demo stays at Udaipur 313001.");
-  origin=n;$("loc").textContent="Current location";me.setLatLng(n);rs.fit=0;list();
- },()=>toast("Allow location access to use your current position."),{enableHighAccuracy:true,timeout:8000});
+L.tileLayer(esriBase, { maxZoom: 19, maxNativeZoom: 16, attribution: "Esri, HERE" }).addTo(map);
+L.tileLayer(esriRef, { maxZoom: 19, maxNativeZoom: 16 }).addTo(map);
+routeLayer.addTo(map);
+
+// User Current Location Marker
+const userMarker = L.marker(DEFAULT_LOC, {
+  icon: L.divIcon({ className: "pw", html: '<div class="me-dot"></div>', iconSize: [0,0] }),
+  zIndexOffset: 900
+}).addTo(map);
+
+// Custom Uber-styled Pin
+const createPin = (item, isSelected = false) => L.divIcon({
+  className: "pw",
+  html: `<div class="uber-pin${isSelected ? ' sel' : ''}">
+          <span class="zap">&#9889;</span>
+          <span>${item.power}kW &bull; ${item.cost}</span>
+         </div>`,
+  iconSize: [0, 0]
+});
+
+SOCIETIES.forEach(item => {
+  markers[item.id] = L.marker([item.lat, item.lng], { icon: createPin(item) })
+    .addTo(map)
+    .on("click", () => selectSociety(item.id));
+});
+
+const getResponsivePad = () => window.innerWidth >= 800 
+  ? { paddingTopLeft: [440, 60], paddingBottomRight: [60, 60] }
+  : { paddingTopLeft: [20, 100], paddingBottomRight: [20, Math.round(window.innerHeight * 0.58) + 20] };
+
+/* Geodesic & Navigation Math */
+const calcDistance = (coord1, coord2) => {
+  const R = 6371;
+  const dLat = (coord2[0] - coord1[0]) * Math.PI / 180;
+  const dLng = (coord2[1] - coord1[1]) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(coord1[0] * Math.PI / 180) * Math.cos(coord2[0] * Math.PI / 180) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
-list();
+
+const calcBearing = (a, b) => {
+  const r = Math.PI / 180;
+  const dLng = (b[1] - a[1]) * r;
+  const y = Math.sin(dLng) * Math.cos(b[0] * r);
+  const x = Math.cos(a[0] * r) * Math.sin(b[0] * r) - Math.sin(a[0] * r) * Math.cos(b[0] * r) * Math.cos(dLng);
+  return (Math.atan2(y, x) / r + 360) % 360;
+};
+
+const getDirectionName = deg => ["North", "North-East", "East", "South-East", "South", "South-West", "West", "North-West"][Math.round(deg / 45) % 8];
+
+const estimateMetrics = item => {
+  item.distKm = calcDistance(origin, [item.lat, item.lng]) * 1.35; // Urban road factor
+  item.driveMins = Math.max(3, Math.round((item.distKm / 24) * 60)); // Avg 24 km/h city speed
+};
+
+const getSortedSocieties = () => {
+  SOCIETIES.forEach(estimateMetrics);
+  return [...SOCIETIES].sort((a, b) => a.distKm - b.distKm);
+};
+
+const showToast = msg => {
+  const el = $("toast");
+  el.textContent = msg;
+  el.style.display = "block";
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => el.style.display = "none", 3200);
+};
+
+/* View: List View */
+function renderList() {
+  routeLayer.clearLayers();
+  selectedSociety = null;
+  SOCIETIES.forEach(item => markers[item.id].setIcon(createPin(item)));
+
+  const sortedList = getSortedSocieties();
+  const categories = ["All", "DC Fast", "Gated High-Rise", "Open to Visitors"];
+  
+  const filteredList = sortedList.filter(item => {
+    if (activeFilter === "All") return true;
+    if (activeFilter === "DC Fast") return item.power >= 30;
+    if (activeFilter === "Gated High-Rise") return item.type.includes("High-Rise") || item.type.includes("Luxury");
+    if (activeFilter === "Open to Visitors") return item.access.toLowerCase().includes("open") || item.access.toLowerCase().includes("visitor");
+    return true;
+  });
+
+  view.innerHTML = `
+    <h1>Residential EV Hubs</h1>
+    <p class="sub">${SOCIETIES.length} verified society stations in Udaipur</p>
+    
+    <button class="btn-primary" id="closestBtn" style="margin-top:14px">
+      <span>Route to Closest Charger</span>
+      <span>&rarr;</span>
+    </button>
+
+    <div class="chips" role="tablist">
+      ${categories.map(c => `
+        <button class="chip" aria-pressed="${c === activeFilter}" data-cat="${c}">${c}</button>
+      `).join("")}
+    </div>
+
+    <div style="margin-top: 6px;">
+      ${filteredList.map((item, idx) => `
+        <button class="row" data-id="${item.id}">
+          <div class="ic">🏢</div>
+          <div class="m">
+            <b>
+              ${item.name}
+              ${item.id === sortedList[0].id ? '<span class="badge-tag">Closest</span>' : ''}
+              ${item.power >= 30 ? '<span class="badge-fast">Fast</span>' : ''}
+            </b>
+            <span class="s">${item.area} &bull; ${item.free}/${item.total} Free &bull; ${item.power}kW</span>
+          </div>
+          <div class="r">
+            <b>${item.cost}</b>
+            <span class="s">${item.distKm.toFixed(1)} km</span>
+          </div>
+        </button>
+      `).join("") || '<p class="sub" style="padding:28px 0; text-align:center;">No apartment societies found in this filter.</p>'}
+    </div>
+  `;
+
+  $("closestBtn").onclick = () => selectSociety(sortedList[0].id);
+  view.querySelectorAll(".chip").forEach(btn => btn.onclick = () => {
+    activeFilter = btn.dataset.cat;
+    renderList();
+  });
+  view.querySelectorAll(".row").forEach(btn => btn.onclick = () => selectSociety(+btn.dataset.id));
+
+  if (!renderList.hasFitted) {
+    map.fitBounds(L.latLngBounds([origin, ...SOCIETIES.map(s => [s.lat, s.lng])]), getResponsivePad());
+    renderList.hasFitted = true;
+  }
+}
+
+/* View: Detail View */
+function selectSociety(id) {
+  selectedSociety = SOCIETIES.find(s => s.id === id);
+  estimateMetrics(selectedSociety);
+
+  SOCIETIES.forEach(item => {
+    markers[item.id].setIcon(createPin(item, item.id === id));
+    markers[item.id].setZIndexOffset(item.id === id ? 1000 : 0);
+  });
+
+  const s = selectedSociety;
+  const targetCoord = [s.lat, s.lng];
+  const bearing = calcBearing(origin, targetCoord);
+  const dirName = getDirectionName(bearing);
+  const km = s.distKm.toFixed(1);
+  const estChargeTime = Math.round((30 / s.power) * 60 * 1.1); // approx time for 30kWh
+
+  view.innerHTML = `
+    <button class="back-btn" id="backToListBtn">&larr; Back to all societies</button>
+    
+    <div class="hd">
+      <div>
+        <h2>${s.name}</h2>
+        <p class="sub">${s.type} &bull; ${s.area}</p>
+        <p class="sub" style="margin-top:4px;">★ ${s.rating} &bull; ${s.hours}</p>
+      </div>
+      <div class="price-block">
+        <b>${s.cost}</b>
+        <small>${s.access}</small>
+      </div>
+    </div>
+
+    <div class="eta-card">
+      <div>
+        <div class="time">${s.driveMins} mins away</div>
+        <div class="dist">${km} km &bull; ${dirName} of your location</div>
+      </div>
+      <div style="font-size:24px;">⚡</div>
+    </div>
+
+    <div class="specs-grid">
+      <div class="spec-box">
+        <small>Charging Speed</small>
+        <b>${s.power} kW</b>
+      </div>
+      <div class="spec-box">
+        <small>Connector Type</small>
+        <b>${s.conn}</b>
+      </div>
+      <div class="spec-box">
+        <small>Live Status</small>
+        <b>${s.free} of ${s.total} bays free</b>
+      </div>
+      <div class="spec-box">
+        <small>Est. 30 kWh Top-Up</small>
+        <b>~${estChargeTime} min</b>
+      </div>
+    </div>
+
+    <p class="about-text">${s.about}</p>
+
+    <div class="tags-row">
+      ${s.tags.map(t => `<span>${t}</span>`).join("")}
+    </div>
+
+    <ol id="steps" hidden>
+      <li>
+        <span class="step-ic"><span style="transform:rotate(${Math.round(bearing)}deg); display:inline-block;">&uarr;</span></span>
+        <span class="step-tx">Drive ${dirName} along main connector</span>
+        <span class="step-km">${km} km</span>
+      </li>
+      <li>
+        <span class="step-ic">🏢</span>
+        <span class="step-tx">Check-in at ${s.name} security barrier & proceed to charging bay</span>
+        <span class="step-km">Arrival</span>
+      </li>
+    </ol>
+
+    <div class="actions-sticky">
+      <a class="btn-primary" target="_blank" rel="noopener" 
+         href="https://www.google.com/maps/dir/?api=1&origin=${origin[0]},${origin[1]}&destination=${s.lat},${s.lng}&travelmode=driving">
+        Open Directions
+      </a>
+      <button class="btn-ghost" id="toggleRouteBtn">Steps</button>
+    </div>
+  `;
+
+  $("backToListBtn").onclick = renderList;
+  $("toggleRouteBtn").onclick = () => {
+    const stepsEl = $("steps");
+    stepsEl.hidden = !stepsEl.hidden;
+    $("toggleRouteBtn").textContent = stepsEl.hidden ? "Steps" : "Hide";
+    if (!stepsEl.hidden) stepsEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
+
+  // Draw clean route path
+  routeLayer.clearLayers();
+  L.polyline([origin, targetCoord], { color: "#ffffff", weight: 8, lineCap: "round" }).addTo(routeLayer);
+  L.polyline([origin, targetCoord], { color: "#000000", weight: 4, lineCap: "round" }).addTo(routeLayer);
+  L.circleMarker(origin, { radius: 6, color: "#000000", weight: 3, fillColor: "#ffffff", fillOpacity: 1 }).addTo(routeLayer);
+
+  map.fitBounds(L.latLngBounds([origin, targetCoord]), getResponsivePad());
+}
+
+/* Geolocation Hook */
+$("gps").onclick = () => {
+  if (!navigator.geolocation) return showToast("Location service unavailable.");
+  
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const userCoord = [pos.coords.latitude, pos.coords.longitude];
+      if (calcDistance(userCoord, DEFAULT_LOC) > 45) {
+        return showToast("Demo configured for Udaipur city perimeter.");
+      }
+      origin = userCoord;
+      $("loc").textContent = "Near Your Location";
+      userMarker.setLatLng(userCoord);
+      renderList.hasFitted = false;
+      renderList();
+      showToast("Updated location");
+    },
+    () => showToast("Please permit GPS access."),
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+};
+
+// Initialize
+renderList();
 </script>
 </body>
 </html>
