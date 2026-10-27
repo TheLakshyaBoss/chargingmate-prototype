@@ -137,7 +137,15 @@ const pad=()=>innerWidth>=800?{paddingTopLeft:[430,90],paddingBottomRight:[50,50
 const hv=(a,b)=>{const r=Math.PI/180,x=Math.sin((b[0]-a[0])*r/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin((b[1]-a[1])*r/2)**2;return 12742*Math.asin(Math.sqrt(x))};
 const fm=m=>m<1000?Math.max(10,Math.round(m/10)*10)+" m":(m/1000).toFixed(1)+" km";
 const toast=t=>{const e=$("toast");e.textContent=t;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",3500)};
-const icon=t=>/cafe|Cafe|Bakery/.test(t)?"\u2615":/thali/.test(t)?"\uD83C\uDF5B":/Palace|Heritage/.test(t)?"\uD83C\uDFF0":/Rooftop/.test(t)?"\uD83C\uDF06":"\uD83C\uDF7D\uFE0F";
+
+const icon=t=>
+  /Society|Societies|Residency|Residential|Apartment|Complex|Enclave|Housing|Gated/i.test(t) ? "🏢" :
+  /cafe|bakery/i.test(t) ? "☕" :
+  /thali/i.test(t) ? "🍛" :
+  /palace|heritage/i.test(t) ? "🏰" :
+  /rooftop/i.test(t) ? "🌆" :
+  "🍽️";
+
 const brg=(a,b)=>{const r=Math.PI/180,dg=(b[1]-a[1])*r,y=Math.sin(dg)*Math.cos(b[0]*r),x=Math.cos(a[0]*r)*Math.sin(b[0]*r)-Math.sin(a[0]*r)*Math.cos(b[0]*r)*Math.cos(dg);return(Math.atan2(y,x)/r+360)%360};
 const dn=d=>["north","north-east","east","south-east","south","south-west","west","north-west"][Math.round(d/45)%8];
 const est=c=>{c.d=hv(origin,[c.lat,c.lng])*1.3;c.e=Math.max(2,Math.round(c.d/22*60))};
